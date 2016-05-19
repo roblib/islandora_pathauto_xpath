@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * Implements hook_token_info().
+ *
+ * Defines a new token, [fedora:u1]
+ */
+function islandora_pathauto_xpath_token_info() {
+  $info['tokens']['fedora']['u1'] = array(
+    'name' => t('Identifier u1'),
+    'description' => t('Identifier from MADS datastream'),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_islandora_datastream_ingested().
+ */
+function islandora_pathauto_xpath_islandora_datastream_ingested($object, $datastream) {
+  module_load_include('module', 'islandora_pathauto');
+  islandora_pathauto_create_alias($object, 'update');
+}
+
+/**
+ * Implements hook_islandora_datastream_modified().
+ */
+function islandora_pathauto_xpath_islandora_datastream_modified($object, $datastream) {
+  module_load_include('module', 'islandora_pathauto');
+  islandora_pathauto_create_alias($object, 'update');
+}
+
+/**
+ * Implements hook_tokens().
+ * 
+ * Handles tokens of type 'fedora' and assigns a value if the token is 'u1'.
+ */
+function islandora_pathauto_xpath_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  if ($type == 'fedora' && !empty($data['fedora'])) {
+    $object = $data['fedora'];
+    $replacements = array();
+    foreach ($tokens as $name => $original) {
+      if ($name == 'u1') {
+        $value = islandora_pathauto_xpath_extract_u1($object);
+        if ($value) {
+          $replacements[$original] = $value;
+        }
+      }
+    }
+    return $replacements;
+  }
+  return array();
+}
+
+
+/**
+ * Extracts the u1 identifier from the MADS datastream.
+ *
+ * @param FedoraObject|IslandoraFedoraObjectReadOnly $object The object to get a token value from.
+ *
+ * @return string The value of the u1 identifier value, or an empty string if failed.
+ */
+function islandora_pathauto_xpath_extract_u1($object) {
+  $xpath = '//mads:mads/mads:identifier[@type="u1"]';
+  if (isset($object['MADS'])) {
+    $mads_string = $object['MADS']->content;
+    $mads_doc = new DOMDocument();
+    $mads_doc->loadXML($mads_string);
+    if ($mads_doc) {
+      $mads_xpath = new DOMXPath($mads_doc);
+      $mads_xpath->registerNamespace('mads', "http://www.loc.gov/mads/v2");
+      $mads_u1_xpath = $mads_xpath->query($xpath);
+      if ($mads_u1_xpath->length) {
+        $mods_caption = $mads_u1_xpath->item(0);
+        $value = $mods_caption->nodeValue;
+        return $value;
+      }
+    }
+
+  }
+  return '';
+}
+

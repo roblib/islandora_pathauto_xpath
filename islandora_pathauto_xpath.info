@@ -1,0 +1,10 @@
+name = Islandora pathauto xpath
+description = Lets you create custom tokens for islandora pathauto using xpaths.
+configure = admin/islandora/tools/islandora-pathauto-xpath
+package = Islandora Tools
+dependencies[] = pathauto
+dependencies[] = token
+dependencies[] = islandora
+dependencies[] = islandora_pathauto
+core = 7.x
+version = 7.x-dev
